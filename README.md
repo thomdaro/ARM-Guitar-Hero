@@ -23,4 +23,23 @@ Responsibilities:
 	Damien:
 		- Menu
 		- Audio
+
+Peripherals:
+	Guitar:
+		- Used as the main input device
+		- Play notes to the rythm
+		- Navigate the menu
+	
+	Gyroscope:
+		- Shake violently to pause the game
+
+	SD Card:
+		- Audio files are stored here
+		- Potentially the graphics files could be stored here as well
+
+	Display:
+		- Used for displaying the SICK game
+
+	Gravy:
+		- Used as sauce (weak) for my breakfast
 ```
