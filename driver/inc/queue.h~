@@ -1,0 +1,8 @@
+/* queue.h Ben Staples 11/6/18 */
+#define QUEUE_SIZE 1
+
+typedef struct queue {
+  int head;
+  int tail;
+  int buffer[QUEUE_SIZE];
+} queue_t;

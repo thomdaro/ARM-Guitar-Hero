@@ -1,0 +1,88 @@
+/* f3d_systick.c --- 
+ * 
+ * Filename: f3d_systick.c
+ * Description: 
+ * Author: Bryce Himebaugh
+ * Maintainer: 
+ * Created: Thu Nov 14 07:57:37 2013
+ * Last-Updated: 
+ *           By: 
+ *     Update #: 0
+ * Keywords: 
+ * Compatibility: 
+ * 
+ */
+
+/* Commentary: 
+ * 
+ * 
+ * 
+ */
+
+/* Change log:
+ * 
+ * 
+ */
+
+/* Copyright (c) 2004-2007 The Trustees of Indiana University and 
+ * Indiana University Research and Technology Corporation.  
+ * 
+ * All rights reserved. 
+ * 
+ * Additional copyrights may follow 
+ */
+
+/* Code: */
+
+#include <f3d_systick.h>
+#include <f3d_led.h> 
+#include <f3d_uart.h>
+
+volatile int systick_flag = 0;
+volatile int i = 0;
+void f3d_systick_init(void) {
+  /*
+  //init clock for gpioa, tim2
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+  
+  //configure nvic and initialize
+  NVIC_InitTypeDef NVIC_InitStructure;
+  NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+
+  //configure timer and initialize
+  TIM_TimeBaseInitTypeDef   TIM_TimeBaseStructure;
+  TIM_OCInitTypeDef   TIM_OCInitStructure;
+  TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
+  TIM_TimeBaseStructure.TIM_Prescaler= SystemCoreClock/100000 - 1;
+  TIM_TimeBaseStructure.TIM_Period = 1000 - 1;
+  TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+  TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
+
+  // PWM1 Mode configuration: Channel2
+  // Edge-aligned; not single pulse mode
+  TIM_OCStructInit(&TIM_OCInitStructure);
+  TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+  TIM_OC2Init(TIM2, &TIM_OCInitStructure);
+  // Enable Timer
+  TIM_Cmd(TIM2, ENABLE);
+  //enable interrupt
+  TIM_ITConfig(TIM2, TIM_IT_Update , ENABLE);
+  TIM_Cmd(TIM2, ENABLE);
+*/
+  //systick config
+  SysTick_Config (SystemCoreClock / 12);
+}
+
+void SysTick_Handler(void) {
+  
+    systick_flag++;
+    f3d_led_off(i);
+}
+
+/* f3d_systick.c ends here */
