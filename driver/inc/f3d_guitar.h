@@ -36,13 +36,12 @@
 #include <stm32f30x.h>
 
 typedef struct guitar_data { 
-  unsigned char jx;
-  unsigned char jy;
-  unsigned short ax;
-  unsigned short ay;
-  unsigned short az;
-  unsigned char c;
-  unsigned char z;
+  unsigned char sx;//1b bits 0->5
+  unsigned char sy;//1b bits 0->5
+  unsigned char tb;//1b bits 0->4
+  unsigned char wb;//1b bits 0->4
+  unsigned char b_one;//1b can we make these last two one? bits 2,4,6 == +,-,bardown
+  unsigned char b_two;//"" bits 0,3->7 == barup, ylw,grn,blu,red,orng
 } guitar_t; 
 
 void f3d_guitar_init(void);

@@ -201,15 +201,18 @@ int main(void) {
   printf("after init\n");
   Delay(10);
 
-  f3d_lcd_fillScreen(WHITE);
-  for(i=0;i<3;i++){
-    f3d_lcd_drawString(10, 10 * i, soundFiles[i],BLACK,WHITE);
-  }
+  //f3d_lcd_fillScreen(WHITE);
+  //for(i=0;i<3;i++){
+  //  f3d_lcd_drawString(10, 10 * i, soundFiles[i],BLACK,WHITE);
+  //}
   
   while(1){
     f3d_guitar_read(&gui);
-    printf("%x\t%x\t%x\t%x\t",gui.jx,gui.jy,gui.ax,gui.ay,gui.az);
+    printf("%x\n",gui.sx);
+    
     Delay(100);
+    //Delay(100);
+    //Delay(100);
     /* if(nun.c == 1){
       i = i % 3;
       f3d_lcd_drawString(10, 10 * i, soundFiles[i],BLACK,WHITE);
@@ -230,7 +233,7 @@ int main(void) {
       playAudio(soundFiles[i]);
 
       }*/
-    Delay(10);
+    //Delay(10);
   }
   
   

@@ -45,14 +45,15 @@ void f3d_guitar_init(void) {
   uint8_t buf = 0x55;
   uint8_t buf2 = 0x00;
 
-
   // Use for factory Wii Nunchuk controllers
   // f3d_i2c1_write(NUNCHUK_ADDRESS,0x40,&realb);
   // Use for 3 party nunchuks like we have in the lab
   f3d_i2c1_write(NUNCHUK_ADDRESS,0xf0,&buf); 
-  //printf("Initial Address Written\n");
+  Delay(100);
+  printf("first address written\n");
   Delay(100);
   f3d_i2c1_write(NUNCHUK_ADDRESS,0xfb,&buf2);
+  printf("second written\n");
 }
 
 void f3d_guitar_read(guitar_t *n) {
@@ -61,39 +62,12 @@ void f3d_guitar_read(guitar_t *n) {
   unsigned short tmp;
 
   f3d_i2c1_read_nunchuk(0x08, data, 6);//device changed to x08
-  n->jx = data[0];
-  n->jy = data[1];
-
-  tmp = data[2];
-  tmp = tmp << 2;
-  n->ax = tmp | ((data[5] & 0x0C) >> 2);
-
-  tmp = data[3];
-  tmp = tmp << 2;
-  n->ay = tmp | ((data[5] & 0x30) >> 4);
-
-  tmp = data[4];
-  tmp = tmp << 2;
-  n->az = tmp | ((data[5] & 0xC0) >> 6);
-
-  switch (data[5] & 0x03) {
-  case 2:
-    n->z = 1;
-    n->c = 0;
-    break;
-  case 1:
-    n->z = 0;
-    n->c = 1;
-    break;
-  case 0:
-    n->z = 1;
-    n->c = 1;
-    break;
-  case 3:
-    n->z = 0;
-    n->c = 0;
-    break;
-  }
+  n->sx = data[0];
+  n->sy = data[1];
+  n->tb = data[2];
+  n->wb = data[3];
+  n->b_one = data[4];
+  n->b_two = data[5];
 }
 
 /* f3d_guitar.c ends here */
