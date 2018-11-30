@@ -62,10 +62,10 @@ void f3d_guitar_read(guitar_t *n) {
   unsigned short tmp;
 
   f3d_i2c1_read_nunchuk(0x08, data, 6);//device changed to x08
-  n->sx = data[0];
-  n->sy = data[1];
-  n->tb = data[2];
-  n->wb = data[3];
+  n->sx = (data[0] & 0x3f);
+  n->sy = (data[1] & 0x3f);
+  n->tb = (data[2] & 0x1f);
+  n->wb = (data[3] & 0x1f);
   n->b_one = data[4];
   n->b_two = data[5];
 }
