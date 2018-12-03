@@ -63,9 +63,63 @@ void selected_item(int x, int y, char* str){
   delay(50);
   f3d_lcd_drawString(x, y, str, CYAN, BLACK);
   delay(50);
+  f3d_lcd_drawString(x, y, str, WHITE, BLACK);
 }
 
+void draw_pause(int menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui){ //menuctl = 4 for pause
+  if(menu_ctl == 4){
+    if(!(*menu_drawn)){
+      f3d_lcd_fillScreen(BLACK);
+      f3d_lcd_drawString(55, 40, "PAUSE", WHITE, BLACK);
+      f3d_lcd_drawString(40, 60, "Resume", WHITE, BLACK);
+      f3d_lcd_drawString(40, 70, "Restart", WHITE, BLACK);
+      f3d_lcd_drawString(40, 80, "Song Select", WHITE, BLACK);
+      f3d_lcd_drawString(40, 90, "Main Menu", WHITE, BLACK);
+      *menu_drawn = 1;
+    }  
+    if(!BARDOWN(gui)){
+      *menu_item = (*menu_item + 1) % 4;
+    }
+    if(!BARUP(gui)){
+      *menu_item = (*menu_item + 3) % 4;
+    }
+    switch(*menu_item){
+    case 0:
+      selected_item(40, 70, "Restart");
+      break;
+    case 1:
+      selected_item(40, 80, "Song Select");
+      break;
+    case 2:
+      selected_item(40, 90, "Main Menu");
+      break;
+    case 3:
+      selected_item(40, 60, "Resume");
+      break;
+    }
+  }
+}
 
+void draw_game(int game_ctl,int* game_drawn){
+  if(game_ctl == 0){
+    if(!(*game_drawn)){
+      //frets
+      f3d_lcd_fillScreen(WHITE);
+      draw_rectangle(ST7735_width - 10, ST7735_height - 5, ST7735_width, ST7735_height, BLACK);
+      draw_rectangle(ST7735_width - 30, ST7735_height - 5, ST7735_width - 20, ST7735_height, BLACK);
+      draw_rectangle(ST7735_width - 50, ST7735_height - 5, ST7735_width - 40, ST7735_height, BLACK);
+      draw_rectangle(ST7735_width - 70, ST7735_height - 5, ST7735_width - 60, ST7735_height, BLACK);
+      draw_rectangle(ST7735_width - 90, ST7735_height - 5, ST7735_width - 80, ST7735_height, BLACK);
+      //hittable zone
+      draw_rectangle(ST7735_width - 90, ST7735_height - 30, ST7735_width, ST7735_height - 27, BLACK);
+      //divider zone......messed up doesn't draw full length =_= THIS IS A SIGNIFICANT ISSUE
+      //the function seems to be valid but the draw won't finish.
+      draw_rectangle(ST7735_width - 100, 0, ST7735_width - 98, ST7735_height, BLACK);
+      *game_drawn = 1;
+    }
+  }
+    
+}
 int main(void) { 
   setvbuf(stdin, NULL, _IONBF, 0);
   setvbuf(stdout, NULL, _IONBF, 0);
@@ -93,48 +147,16 @@ int main(void) {
   
   int i;
   char button_vals[5] = {'y','g','b','r','o'};
+  int game_ctl = 4;
   int menu_drawn_pause = 0;
+  int game_drawn = 0;
   int menu_item = 0;
-
+  
   while(1){
     f3d_guitar_read(&gui);
-    /*
-    for(i=0;i<5;i++){
-      printf("BUTTON %c|%d\n",button_vals[i],BUTTON(gui,i);
-    }
-    printf("\n\n");
-    Delay(100);
-    printf("BARDOWN %d\n",BARDOWN(gui));
-    printf("BARUP   %d\n",BARUP(gui));
-    Delay(1000);
-    printf("MINUS   %d\n",MINUS(gui));
-    printf("PLUS    %d\n",PLUS(gui));
-    */
-    if(!menu_drawn_pause){
-      f3d_lcd_fillScreen(BLACK);
-      f3d_lcd_drawString(55, 40, "PAUSE", WHITE, BLACK);
-      f3d_lcd_drawString(40, 50, "Restart", WHITE, BLACK);
-      f3d_lcd_drawString(40, 60, "Song Select", WHITE, BLACK);
-      f3d_lcd_drawString(40, 70, "Main Menu", WHITE, BLACK);
-      menu_drawn_pause = 1;
-    }
-    switch(menu_item){
-    case 0:
-      selected_item(40, 50, "Restart");
-      break;
-    case 1:
-      selected_item(40, 60, "Song Select");
-      break;
-    case 2:
-      selected_item(40, 70, "Main Menu");
-      break;
-    }
-    if(!BARDOWN(gui)){
-      menu_item = (menu_item + 1) % 3;
-    }
-    if(!BARUP(gui)){
-      menu_item = (menu_item + 2) % 3;
-    }
+    draw_game(game_ctl, &game_drawn);
+    draw_pause(game_ctl, &menu_drawn_pause, &menu_item, gui);
+    
   }
   
   

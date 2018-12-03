@@ -340,6 +340,21 @@ static void f3d_lcd_writeCmd(uint8_t c) {
   LcdWrite(LCD_C,&c,1);
 }
 
+void draw_rectangle(uint8_t x, uint8_t y, uint8_t x_end, uint8_t y_end, uint16_t color){
+  int i;
+  int width = x_end - x;
+  int height = y_end - y;
+  uint16_t len[width];
+  for(i=0;i<width;i++){
+    len[i] = color;
+  }
+  f3d_lcd_setAddrWindow(x, y, x_end, y_end, MADCTLGRAPHICS);
+  for(i=0;i<height;i++){
+    f3d_lcd_pushColor(len,width);
+  }
+}
+
+
 void f3d_lcd_fillScreen(uint16_t color) {
   uint8_t y;
   uint16_t x[ST7735_width];
@@ -365,7 +380,6 @@ void f3d_lcd_drawPixel(uint8_t x, uint8_t y, uint16_t color) {
   f3d_lcd_setAddrWindow(x,y,x+1,y+1,MADCTLGRAPHICS);
   f3d_lcd_pushColor(&color,1);
 }
-
 
 void f3d_lcd_drawChar(uint8_t x, uint8_t y, unsigned char c, uint16_t color, uint16_t background_color) {
   int i, j;
