@@ -19,6 +19,7 @@ OBJS=  $(STARTUP)	test.o \
                         f3d_lcd_sd.o \
                         f3d_i2c.o \
                         f3d_nunchuk.o \
+			f3d_guitar.o \
                         stm32f30x_i2c.o \
                         stm32f30x_rcc.o \
                         stm32f30x_tim.o \
