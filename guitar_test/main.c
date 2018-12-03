@@ -44,11 +44,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BARDOWN(x) ((x->b_one) >> 6)
-#define BARUP(x) ((x->b_two) & 0x1)
-#define MINUS(x) (((x->b_one) >> 4) & 0x1)
-#define PLUS(x) (((x->b_one) >> 2) & 0x1)
-#define BUTTON(x, y) (((x->b_two) >> (3 + y)) & 0x1)) //vals 0->4 y,g,b,r,o
+#define BARDOWN(x) ((x.b_one) >> 6)
+#define BARUP(x) ((x.b_two) & 0x1)
+#define MINUS(x) (((x.b_one) >> 4) & 0x1)
+#define PLUS(x) (((x.b_one) >> 2) & 0x1)
+#define BUTTON(x, y) (((x.b_two) >> (3 + y)) & 0x1)) //vals 0->4 y,g,b,r,o
 
 guitar_t gui;
 
@@ -82,13 +82,14 @@ int main(void) {
   while(1){
     f3d_guitar_read(&gui);
     for(i=0;i<5;i++){
-      printf("BUTTON %c|%d\n",button_vals[i],BUTTON(gui,i));
+      printf("BUTTON %c|%d\n",button_vals[i],BUTTON(gui,i);
     }
+    printf("\n\n");
     Delay(100);
-    printf("BARDOWN %d\n",BARDOWN(gui));
-    printf("BARUP   %d\n",BARUP(gui));
-    printf("MINUS   %d\n",MINUS(gui));
-    printf("PLUS    %d\n",PLUS(gui));
+    //printf("BARDOWN %d\n",BARDOWN(gui));
+    //printf("BARUP   %d\n",BARUP(gui));
+    //printf("MINUS   %d\n",MINUS(gui));
+    //printf("PLUS    %d\n",PLUS(gui));
   }
   
   

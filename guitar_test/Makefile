@@ -8,7 +8,6 @@ ASFLAGS = -g
 # object files
 
 OBJS=  $(STARTUP) 	main.o \
-			500hz.o \
 			queue.o \
 			f3d_user_btn.o \
 			f3d_uart.o \
