@@ -44,6 +44,12 @@ typedef struct guitar_data {
   unsigned char b_two;//"" bits 0,3->7 == barup, ylw,grn,blu,red,orng
 } guitar_t; 
 
+typedef struct fret_data {
+  uint8_t fret; //0->4
+  uint8_t y_pos;
+  uint8_t active;
+} fret_t;
+
 void f3d_guitar_init(void);
 void f3d_guitar_read(guitar_t *);
 
