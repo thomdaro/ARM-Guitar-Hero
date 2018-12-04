@@ -92,6 +92,8 @@ int playAudio(char* fname){
   UINT bw, br;
   unsigned int retval;
   int bytesread;
+  nunchuk_t nun;
+
   f_mount(0,&Fatfs);
   rc = f_open(&fid,fname, FA_READ);
   if(rc)die(rc);
@@ -205,15 +207,16 @@ int main(void) {
   //for(i=0;i<3;i++){
   //  f3d_lcd_drawString(10, 10 * i, soundFiles[i],BLACK,WHITE);
   //}
-  
+  nunchuk_t nun;
   while(1){
-    f3d_guitar_read(&gui);
-    printf("%x\n",gui.sx);
+    //f3d_guitar_read(&gui);
+    //printf("%x\n",gui.sx);
     
-    Delay(100);
     //Delay(100);
     //Delay(100);
-    /* if(nun.c == 1){
+    //Delay(100);
+    f3d_nunchuk_read(&nun);
+     if(nun.c == 1){
       i = i % 3;
       f3d_lcd_drawString(10, 10 * i, soundFiles[i],BLACK,WHITE);
       Delay(10);
@@ -232,7 +235,7 @@ int main(void) {
       Delay(10);
       playAudio(soundFiles[i]);
 
-      }*/
+      }
     //Delay(10);
   }
   
