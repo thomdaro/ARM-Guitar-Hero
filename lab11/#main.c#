@@ -196,7 +196,7 @@ int main(void) {
   f3d_rtc_init();
   Delay(10);
   // f3d_guitar_init();
-  Delay(10);
+  // Delay(10);
 
   f3d_lcd_fillScreen(WHITE);
   for(i=0;i<3;i++){
