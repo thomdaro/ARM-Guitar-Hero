@@ -342,8 +342,8 @@ static void f3d_lcd_writeCmd(uint8_t c) {
 
 void draw_rectangle(uint8_t x, uint8_t y, uint8_t x_end, uint8_t y_end, uint16_t color){
   int i;
-  int width = x_end - x;
-  int height = y_end - y;
+  int width = x_end - x + 1;
+  int height = y_end - y + 1;
   uint16_t len[width];
   for(i=0;i<width;i++){
     len[i] = color;

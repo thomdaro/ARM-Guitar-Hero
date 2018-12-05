@@ -1,0 +1,11 @@
+#include <stm23f30x.h>
+#include <f3d_lcd_sd.h>
+#include <stdio.h>
+
+void main(void) {
+
+  while(1) {
+    f3d_lcd_fillScreen(BLACK);
+    f3d_lcd_fillScreen(WHITE);
+  }
+}
