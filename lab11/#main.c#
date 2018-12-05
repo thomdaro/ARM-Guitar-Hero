@@ -56,7 +56,7 @@ FIL fid;		/* File object */
 BYTE Buff[512];		/* File read buffer */
 guitar_t gui;
 int ret,i;
-char* soundFiles[3] = {"sound1.wav\0","sound2.wav\0","sound3.wav\0"};
+char* soundFiles[3] = {"500hz.wav", "violin.wav","guitar.wav"};
 
 struct ckhd {
   uint32_t ckID;
@@ -92,8 +92,6 @@ int playAudio(char* fname){
   UINT bw, br;
   unsigned int retval;
   int bytesread;
-  nunchuk_t nun;
-
   f_mount(0,&Fatfs);
   rc = f_open(&fid,fname, FA_READ);
   if(rc)die(rc);
@@ -145,7 +143,7 @@ int playAudio(char* fname){
     
     // Play it !
     
-    //audioplayerInit(fck.nSamplesPerSec);
+    // audioplayerInit(fck.nSamplesPerSec);
     
     f_read(&fid, Audiobuf, AUDIOBUFSIZE, &ret);
     hd.cksize -= ret;
@@ -197,55 +195,27 @@ int main(void) {
   Delay(10);
   f3d_rtc_init();
   Delay(10);
-  printf("before init\n");
-  Delay(100);
-  f3d_guitar_init();
-  printf("after init\n");
-  Delay(10);
+  // f3d_guitar_init();
+  // Delay(10);
 
-  //f3d_lcd_fillScreen(WHITE);
-  //for(i=0;i<3;i++){
-  //  f3d_lcd_drawString(10, 10 * i, soundFiles[i],BLACK,WHITE);
-  //}
-  nunchuk_t nun;
-  while(1){
-    //f3d_guitar_read(&gui);
-    //printf("%x\n",gui.sx);
+  f3d_lcd_fillScreen(WHITE);
+  for(i=0;i<3;i++){
+    f3d_lcd_drawString(10, 10 * i, soundFiles[i],BLACK,WHITE);
+  }
     
-    //Delay(100);
-    //Delay(100);
-    //Delay(100);
-    f3d_nunchuk_read(&nun);
-     if(nun.c == 1){
-      i = i % 3;
-      f3d_lcd_drawString(10, 10 * i, soundFiles[i],BLACK,WHITE);
-      Delay(10);
-      i = (i + 1) % 3;
-      f3d_lcd_drawString(10, 10 * i, soundFiles[i],YELLOW,WHITE);
-      Delay(10);
-      playAudio(soundFiles[i]);
+  Delay(100);
 
-    }
-    else if(nun.z == 1){
-      i = i % 3;
-      f3d_lcd_drawString(10, 10 * i, soundFiles[i],BLACK,WHITE);
-      Delay(10);
-      i = (i + 2) % 3;
-      f3d_lcd_drawString(10, 10 * i, soundFiles[i],YELLOW,WHITE);
-      Delay(10);
-      playAudio(soundFiles[i]);
+  playAudio(soundFiles[0]);
 
-      }
-    //Delay(10);
-  }
-  
-  
-  while (1){
-    f3d_lcd_fillScreen(RED);
-    f3d_lcd_fillScreen(BLUE);
-    f3d_lcd_fillScreen(RED);
-  }
-  
+  Delay(100);
+
+  playAudio(soundFiles[1]);
+
+  Delay(100);
+
+  playAudio(soundFiles[2]);
+
+  Delay(100);
 }
 
 #ifdef USE_FULL_ASSERT
