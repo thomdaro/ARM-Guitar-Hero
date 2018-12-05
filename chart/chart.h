@@ -1,4 +1,4 @@
-#include <stm32f30x.h>
+
 
 /* functions */
 #define QUOTE_REGEX "%*[^\"]%*c%[^\"]"
