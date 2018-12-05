@@ -160,7 +160,7 @@ void drop_frets(fret_t frets[20]){ //drops all frets marked ACTIVE in list
   int i;
   for(i=0;i<20;i++){
     if(frets[i].active){
-      draw_fret(&frets[i], BLACK);
+      draw_fret(&frets[i], BLACK); 
       draw_rectangle(&frets[i].y_pos, ST7735_width - (20 * (int)(&frets[i].fret)) - 30,
 		     &frets[i].y_pos + 5, ST7735_width - (20 * (int)(&frets[i].fret)) - 30);
       drop_fret(&frets[i]);
@@ -169,9 +169,25 @@ void drop_frets(fret_t frets[20]){ //drops all frets marked ACTIVE in list
     }
   }
 }
-
+/*
+should take single_t ptr actually, doesn't handle removing used notes.
+void add_frets(int counter, single_t notes, fret_t frets[20]){
+  int i;
+  if(notes->time == counter){
+    for(i=0;i<20;i++){
+      if(!frets[i].active){
+	frets[i].fret = notes.num0;
+	frets[i].active = 1;
+	frets[i].ypos = 0;
+	break;
+      }
+    }
+    add_frets(notes.next);
+  }
+}
+*/
 //draw game board if switching game state & controls fret drop / rate of drop
-void draw_game(int game_ctl,int* game_drawn,fret_t frets[20], int d_rate){
+void draw_game(int game_ctl,int* game_drawn,fret_t frets[20], int d_rate, int* counter){
   if(game_ctl == 0){
     if(!(*game_drawn)){
       f3d_lcd_fillScreen(BLACK);
@@ -194,10 +210,12 @@ void draw_game(int game_ctl,int* game_drawn,fret_t frets[20], int d_rate){
       draw_rectangle(ST7735_width - 10,  0, ST7735_width - 8,  ST7735_height, WHITE);
       *game_drawn = 1;
     }
+    //add_frets(counter, single_t notes, frets);
     draw_inactive_frets(gui);
     draw_active_frets(gui);
     drop_frets(frets);
     Delay(d_rate);
+    *counter++;
   }
 }
 
@@ -227,6 +245,7 @@ int main(void) {
   Delay(10);
   
   int d_rate = 1;//currently drop rate
+  int counter = 0;//current number of ticks into game
   char button_vals[5] = {'y','g','b','r','o'};
   int game_ctl = 0;//controls which menu or on or whether we are in game
   int menu_drawn_pause = 0;//tells us whether the menu is on screen/if we shoudl redraw 
@@ -240,7 +259,7 @@ int main(void) {
 
   while(1){
     f3d_guitar_read(&gui);
-    draw_game(game_ctl, &game_drawn, testnotes, d_rate);
+    draw_game(game_ctl, &game_drawn, testnotes, d_rate, &counter);
     draw_pause(game_ctl, &menu_drawn_pause, &menu_item, gui);
   }
 }
