@@ -72,15 +72,12 @@ void die (FRESULT rc) {
 */
 
 //read chart from sd card
-void read_chart(song_t *s,  sync_track_t *syn, event_t *ev, single_t *notes, FRESULT rc, DIR dir, FILINFO fno, char* song){
-  //song = strcat("/charts/","notes.txt\0");
+void read_chart(song_t *s,  sync_track_t *syn, event_t *ev, single_t *notes, FRESULT rc, DIR dir, FILINFO fno){
   f_mount(0, &Fatfs);		/* Register volume work area (never fails) */
-  rc = f_opendir(&dir, "");
+  rc = f_opendir(&dir, "/charts");
   printf("A:");
   if (rc) die(rc);
-  char* to_open;
-  printf("%s\n,",to_open);
-  rc = f_open(&Fil, song, FA_READ);
+  rc = f_open(&Fil, "/charts/notes.txt", FA_READ);
   printf("B:");
   if (rc) die(rc);
   init_song(&Fil,s);
@@ -146,11 +143,8 @@ void draw_fret(fret_t *fret, uint16_t color){
   int draw_x_pos = ST7735_width  - (20 * fret->fret) - 30;
   draw_rectangle(draw_x_pos, fret->y_pos, draw_x_pos + 10, fret->y_pos + 5, color);
   f3d_lcd_drawPixel((uint8_t)(draw_x_pos + 5), (uint8_t)fret->y_pos, WHITE);
-  if (fret->y_pos > ST7735_height - 30 && fret->y_pos <= ST7735_height - 26){
-    //fret->active = 0;
+  if (fret->y_pos > ST7735_height - 30 && fret->y_pos <= ST7735_height - 26)
     draw_rectangle(draw_x_pos, fret->y_pos - 1, draw_x_pos + 10, fret->y_pos - 1, WHITE);
-    //fret->active = 0;
-  }
 }
 
 int check_strummed(fret_t *fret) {
@@ -208,9 +202,8 @@ void drop_frets(fret_t frets[20]){ //drops all frets marked ACTIVE in list
       draw_rectangle(&frets[i].y_pos, ST7735_width - (20 * (int)(&frets[i].fret)) - 30,
 		     &frets[i].y_pos + 5, ST7735_width - (20 * (int)(&frets[i].fret)) - 30);
       drop_fret(&frets[i]);
-      if (check_strummed(&frets[i])){
+      if (check_strummed(&frets[i]))
 	draw_fret(&frets[i], fret_colors[frets[i].fret]);
-      }
     }
   }
 }
@@ -221,7 +214,6 @@ void add_frets(int counter, single_t *notes, fret_t frets[50]){
   single_t temp;
   if(notes->time == counter){
     for(i=0;i<50;i++){
-      printf("%d\n",frets[i].active);
       if(!frets[i].active){
 	frets[i].fret = notes->num0;
 	frets[i].active = 1;
@@ -236,7 +228,7 @@ void add_frets(int counter, single_t *notes, fret_t frets[50]){
 }
 
 //draw game board if switching game state & controls fret drop / rate of drop
-void draw_game(int game_ctl,int* game_drawn, fret_t frets[20], int d_rate, int* counter, int* countdown, single_t *notes){
+void draw_game(int game_ctl,int* game_drawn, fret_t frets[20], int d_rate, int* counter, int* countdown){
   if(game_ctl == 0){
     if(!(*game_drawn)){
       f3d_lcd_fillScreen(BLACK);
@@ -259,13 +251,13 @@ void draw_game(int game_ctl,int* game_drawn, fret_t frets[20], int d_rate, int* 
       draw_rectangle(ST7735_width - 10,  0, ST7735_width - 8,  ST7735_height, WHITE);
       *game_drawn = 1;
     }
+    //add_frets(counter, single_t notes, frets);
     draw_inactive_frets(gui);
     draw_active_frets(gui);
     drop_frets(frets);
     if (*countdown) {
       draw_countdown(countdown);
     }
-    add_frets(*counter, notes, frets);
     Delay(d_rate);
     *counter = *counter + 1;
   }
@@ -312,8 +304,8 @@ int main(void) {
   sync_track_t sync;
   event_t events;
   single_t notes;
- 
-  read_chart(&song_current,&sync,&events,&notes,rc,dir,fno,"song050.txt");
+  
+  read_chart(&song_current,&sync,&events,&notes,rc,dir,fno);
 
   int d_rate = 100;//currently drop rate
   int counter = 0;//current number of ticks into game
@@ -348,7 +340,7 @@ int main(void) {
 
     add_frets(counter,&notes,testnotes);
     printf("counter %d\n",counter);
-    draw_game(game_ctl, &game_drawn, testnotes, d_rate, &counter, &countdown, &notes);
+    draw_game(game_ctl, &game_drawn, testnotes, d_rate, &counter, &countdown);
     draw_pause(&game_ctl, &menu_drawn_pause, &menu_item, gui, &countdown, &play_menu_sound);
     if(play_menu_sound){
       playAudio(rc,dir,fno,Fatfs,fid,Buff,"hit.wav\0");
