@@ -56,6 +56,7 @@ const uint8_t button_pos[5] = {4,2,0,3,1};
 
 guitar_t gui;
 
+/*
 void selected_item(int x, int y, char* str){
   f3d_lcd_drawString(x, y, str, RED, BLACK);
   delay(50);
@@ -69,6 +70,7 @@ void selected_item(int x, int y, char* str){
   delay(50);
   f3d_lcd_drawString(x, y, str, WHITE, BLACK);
 }
+*/
 
 void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui){ //menuctl = 4 for pause
   if(*menu_ctl == 4){
@@ -79,15 +81,28 @@ void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui){ /
       f3d_lcd_drawString(40, 70, "Restart", WHITE, BLACK);
       f3d_lcd_drawString(40, 80, "Song Select", WHITE, BLACK);
       f3d_lcd_drawString(40, 90, "Main Menu", WHITE, BLACK);
+      f3d_lcd_drawChar(30, 60, '>', WHITE, BLACK);
       *menu_drawn = 1;
     }  
     if(!BARDOWN(gui)){
       *menu_item = (*menu_item + 1) % 4;
+      f3d_lcd_drawChar(30, (*menu_item) % 4 * 10 + 60, '>', WHITE, BLACK);
+      if (*menu_item != 0) f3d_lcd_drawChar(30, (*menu_item - 1) % 4 * 10 + 60, '>', BLACK, BLACK);
+      else f3d_lcd_drawChar(30, 90, '>', BLACK, BLACK);
+      Delay(10000);
     }
     if(!BARUP(gui)){
       *menu_item = (*menu_item + 3) % 4;
+      f3d_lcd_drawChar(30, (*menu_item) % 4 * 10 + 60, '>', WHITE, BLACK);
+      f3d_lcd_drawChar(30, (*menu_item + 1) % 4 * 10 + 60, '>', BLACK, BLACK);
+      Delay(10000);
     }
-    switch(*menu_item){
+    if (!BUTTON(gui, 1)) {
+      *menu_ctl = 0;
+      *menu_drawn = 0;
+    }
+    /*
+    switch(*menu_item) {
     case 0:
       selected_item(40, 70, "Restart");
       break;
@@ -99,18 +114,20 @@ void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui){ /
       break;
     case 3:
       selected_item(40, 60, "Resume");
-      if(!PLUS(gui)){
+      if(!BUTTON(gui, 1)){
 	*menu_ctl = 0;
 	*menu_drawn = 0;
       }
       break;
     }
+    */
   }
 }
 
 void draw_fret(fret_t *fret, uint16_t color){
   int draw_x_pos = ST7735_width  - (20 * fret->fret) - 30;
   draw_rectangle(draw_x_pos, fret->y_pos, draw_x_pos + 10, fret->y_pos + 5, color);
+  f3d_lcd_drawPixel((uint8_t)(draw_x_pos + 5), (uint8_t)fret->y_pos, WHITE);
   if (fret->y_pos > ST7735_height - 30 && fret->y_pos <= ST7735_height - 26)
     draw_rectangle(draw_x_pos, fret->y_pos - 1, draw_x_pos + 10, fret->y_pos - 1, WHITE);
 }
@@ -119,8 +136,10 @@ int check_strummed(fret_t *fret) {
   if (fret->y_pos >= ST7735_height - 35 && fret->y_pos <= ST7735_height - 26 && 
       !BUTTON(gui, button_pos[fret->fret]) && (!BARDOWN(gui) || !BARUP(gui))) {
     fret->active = 0;
-    int draw_x_pos = ST7735_width - (20 * fret->fret) - 10;
-    draw_rectangle(draw_x_pos, ST7735_height - 35, draw_x_pos + 10, ST7735_height - 30, BLACK);
+    int draw_x_pos = ST7735_width - (20 * fret->fret) - 30;
+    draw_rectangle(draw_x_pos, ST7735_height - 35, draw_x_pos + 4, ST7735_height - 30, BLACK);
+    draw_rectangle(draw_x_pos + 6, ST7735_height - 35, draw_x_pos + 10, ST7735_height - 30, BLACK);
+    draw_rectangle(draw_x_pos + 5, ST7735_height - 35, draw_x_pos + 5, ST7735_height - 30, WHITE);
     draw_rectangle(draw_x_pos, ST7735_height - 30, draw_x_pos + 10, ST7735_height - 27, WHITE);
   }
   return fret->active;
@@ -209,7 +228,7 @@ void draw_game(int game_ctl,int* game_drawn,fret_t frets[20], int d_rate, int* c
       draw_rectangle(ST7735_width - 105, 0, ST7735_width - 105, ST7735_height, WHITE);
       // hittable zone
       draw_rectangle(ST7735_width - 120, ST7735_height - 30, ST7735_width - 10, ST7735_height - 27, WHITE);
-      // divider (add multiplier indicator?)
+      // dividers
       draw_rectangle(ST7735_width - 122, 0, ST7735_width - 120, ST7735_height, WHITE);
       draw_rectangle(ST7735_width - 10,  0, ST7735_width - 8,  ST7735_height, WHITE);
       *game_drawn = 1;
@@ -269,8 +288,8 @@ int main(void) {
   while(1){
     f3d_guitar_read(&gui);
     f3d_gyro_getdata(gyro_vals);
-    //plus or shake to pause (hopefully this gyro function works)
-    if(!PLUS(gui) || gyro_vals[1] < -.5 || gyro_vals[1] > -.4){
+    //plus or shake to pause
+    if(!PLUS(gui) || gyro_vals[0] < -10 || gyro_vals[0] > 10){
       game_ctl = 4;
       game_drawn = 0;
     }
