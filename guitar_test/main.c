@@ -65,7 +65,6 @@ void die (FRESULT rc) {
 }
 */
 
-<<<<<<< HEAD
 //read chart from sd card
 void read_chart(song_t *s,  sync_track_t *syn, event_t *ev, single_t *notes, FRESULT rc, DIR dir, FILINFO fno){
   f_mount(0, &Fatfs);		/* Register volume work area (never fails) */
@@ -84,8 +83,7 @@ void read_chart(song_t *s,  sync_track_t *syn, event_t *ev, single_t *notes, FRE
   f_close(&Fil);
 }
 
-void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui){ //menuctl = 4 for pause
-=======
+
 void draw_countdown(int *countdown) {
   draw_rectangle(50, 5, 75, 20, WHITE);
   draw_rectangle(52, 7,  73, 18, BLACK);
@@ -101,7 +99,6 @@ void draw_countdown(int *countdown) {
 }
 
 void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui, int* countdown){ //menuctl = 4 for pause
->>>>>>> 6abeb8ab5be8cff4e78f80b30165b54453956e73
   if(*menu_ctl == 4){
     if(!(*menu_drawn)){
       f3d_lcd_fillScreen(BLACK);
@@ -308,12 +305,11 @@ int main(void) {
   int menu_drawn_pause = 0;//tells us whether the menu is on screen/if we shoudl redraw 
   int game_drawn = 0;//same as above, with game
   int menu_item =  0;//value of current menu item selected
-<<<<<<< HEAD
+
   fret_t testnotes[50] = {{0}};//these represent notes in the game
-=======
   int countdown =  0;//determines when to draw unpause countdown
-  fret_t testnotes[20] = {{0}};//these represent notes in the game
->>>>>>> 6abeb8ab5be8cff4e78f80b30165b54453956e73
+
+
 
   float gyro_vals[3] = {0,0,0};
 
@@ -331,15 +327,13 @@ int main(void) {
       game_ctl = 4;
       game_drawn = 0;
     }
-<<<<<<< HEAD
+
     add_frets(counter,&notes,testnotes);
     printf("counter %d\n",counter);
-    draw_game(game_ctl, &game_drawn, testnotes, d_rate, &counter);
-    draw_pause(&game_ctl, &menu_drawn_pause, &menu_item, gui);
-=======
+
     draw_game(game_ctl, &game_drawn, testnotes, d_rate, &counter, &countdown);
     draw_pause(&game_ctl, &menu_drawn_pause, &menu_item, gui, &countdown);
->>>>>>> 6abeb8ab5be8cff4e78f80b30165b54453956e73
+
   }
   
 }
