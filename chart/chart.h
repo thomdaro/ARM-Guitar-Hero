@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-
-
-=======
->>>>>>> cd0e9aae128ecb0ac93017d04a764785c2177854
 /* functions */
 #define QUOTE_REGEX "%*[^\"]%*c%[^\"]"
 #define NUM_REGEX 	"%*[^=]%*2c%hd"
