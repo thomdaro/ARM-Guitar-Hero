@@ -12,6 +12,7 @@ OBJS=  $(STARTUP) 	main.o \
 			f3d_audio.o \
 			f3d_user_btn.o \
 			f3d_uart.o \
+			chart.o \
 			f3d_led.o \
 			f3d_systick.o \
 			f3d_dac.o \

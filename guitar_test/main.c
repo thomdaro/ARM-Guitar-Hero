@@ -24,10 +24,9 @@
  * 
  */
 /* Code: */
-
 #include <stm32f30x.h>  // Pull in include files for F30x standard drivers 
 #include <f3d_led.h>     // Pull in include file for the local drivers
-#include <f3d_uart.h>
+#include <ff.h>
 #include <f3d_gyro.h>
 #include <f3d_lcd_sd.h>
 #include <f3d_i2c.h>
@@ -37,13 +36,14 @@
 #include <f3d_guitar.h>
 #include <f3d_rtc.h>
 #include <f3d_systick.h>
-#include <ff.h>
 #include <diskio.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <chart.h>
 
+//guitar macros and corresponding button sequences + colors
 #define BARDOWN(x) (((x.b_one) >> 6) & 0x1)
 #define BARUP(x) ((x.b_two) & 0x1)
 #define MINUS(x) (((x.b_one) >> 4) & 0x1)
@@ -52,25 +52,36 @@
 const uint16_t fret_colors[5] = {0x06BF, BLUE, YELLOW, RED, GREEN};
 const uint8_t fret_pos[5] = {2,4,1,3,0};
 const uint8_t button_pos[5] = {4,2,0,3,1};
-// const uint16_t pressed_colors[5] = {};
-
 guitar_t gui;
 
+//File system stuff
+FATFS Fatfs;		/* File system object*/
+FIL Fil;		/* File object	     */
+BYTE Buff[128];		/* File read buffer  */
 /*
-void selected_item(int x, int y, char* str){
-  f3d_lcd_drawString(x, y, str, RED, BLACK);
-  delay(50);
-  f3d_lcd_drawString(x, y, str, YELLOW, BLACK);
-  delay(50);
-  f3d_lcd_drawString(x, y, str, GREEN, BLACK);
-  delay(50);
-  f3d_lcd_drawString(x, y, str, BLUE, BLACK);
-  delay(50);
-  f3d_lcd_drawString(x, y, str, CYAN, BLACK);
-  delay(50);
-  f3d_lcd_drawString(x, y, str, WHITE, BLACK);
+void die (FRESULT rc) {
+	printf("Failed with rc=%u.\n", rc);
+	while (1);
 }
 */
+
+//read chart from sd card
+void read_chart(song_t *s,  sync_track_t *syn, event_t *ev, single_t *notes, FRESULT rc, DIR dir, FILINFO fno){
+  f_mount(0, &Fatfs);		/* Register volume work area (never fails) */
+  rc = f_opendir(&dir, "/charts");
+  printf("A:");
+  if (rc) die(rc);
+  rc = f_open(&Fil, "/charts/notes.txt", FA_READ);
+  printf("B:");
+  if (rc) die(rc);
+  init_song(&Fil,s);
+  init_sync_track(&Fil, syn);
+  init_event(&Fil, ev);
+  init_single(&Fil, notes);
+  Delay(1000);
+
+  f_close(&Fil);
+}
 
 void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui){ //menuctl = 4 for pause
   if(*menu_ctl == 4){
@@ -101,26 +112,6 @@ void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui){ /
       *menu_ctl = 0;
       *menu_drawn = 0;
     }
-    /*
-    switch(*menu_item) {
-    case 0:
-      selected_item(40, 70, "Restart");
-      break;
-    case 1:
-      selected_item(40, 80, "Song Select");
-      break;
-    case 2:
-      selected_item(40, 90, "Main Menu");
-      break;
-    case 3:
-      selected_item(40, 60, "Resume");
-      if(!BUTTON(gui, 1)){
-	*menu_ctl = 0;
-	*menu_drawn = 0;
-      }
-      break;
-    }
-    */
   }
 }
 
@@ -192,23 +183,26 @@ void drop_frets(fret_t frets[20]){ //drops all frets marked ACTIVE in list
     }
   }
 }
-/*
-should take single_t ptr actually, doesn't handle removing used notes.
-void add_frets(int counter, single_t notes, fret_t frets[20]){
+
+//should take single_t ptr actually, doesn't handle removing used notes.
+void add_frets(int counter, single_t *notes, fret_t frets[50]){
   int i;
+  single_t temp;
   if(notes->time == counter){
-    for(i=0;i<20;i++){
+    for(i=0;i<50;i++){
       if(!frets[i].active){
-	frets[i].fret = notes.num0;
+	frets[i].fret = notes->num0;
 	frets[i].active = 1;
-	frets[i].ypos = 0;
+	frets[i].y_pos = 0;
+	temp = *(notes->next);
+	*notes = temp;
 	break;
       }
     }
-    add_frets(notes.next);
+    add_frets(counter,&temp,frets);
   }
 }
-*/
+
 //draw game board if switching game state & controls fret drop / rate of drop
 void draw_game(int game_ctl,int* game_drawn,fret_t frets[20], int d_rate, int* counter){
   if(game_ctl == 0){
@@ -238,16 +232,22 @@ void draw_game(int game_ctl,int* game_drawn,fret_t frets[20], int d_rate, int* c
     draw_active_frets(gui);
     drop_frets(frets);
     Delay(d_rate);
-    *counter++;
+    *counter = *counter + 1;
   }
 }
 
 
 
 int main(void) { 
+  /*file objects*/
+  FRESULT rc;	
+  FIL fid;
+  DIR dir;			
+  FILINFO fno;		
+
   setvbuf(stdin, NULL, _IONBF, 0);
   setvbuf(stdout, NULL, _IONBF, 0);
-  setvbuf(stderr, NULL, _IONBF, 0);
+  setvbuf(stderr, NULL, _IONBF, 0);		
 
   f3d_systick_init();
   Delay(10);
@@ -267,8 +267,18 @@ int main(void) {
   Delay(10);
   f3d_guitar_init();
   Delay(10);
-  f3d_gyro_interface_init();
+  f3d_gyro_init();
   
+  f_mount(0,&Fatfs);
+
+  /*Char data structs */
+  song_t song_current;
+  sync_track_t sync;
+  event_t events;
+  single_t notes;
+  
+  read_chart(&song_current,&sync,&events,&notes,rc,dir,fno);
+
   int d_rate = 100;//currently drop rate
   int counter = 0;//current number of ticks into game
   char button_vals[5] = {'y','g','b','r','o'};
@@ -276,14 +286,15 @@ int main(void) {
   int menu_drawn_pause = 0;//tells us whether the menu is on screen/if we shoudl redraw 
   int game_drawn = 0;//same as above, with game
   int menu_item =  0;//value of current menu item selected
-  fret_t testnotes[20] = {{0}};//these represent notes in the game
+  fret_t testnotes[50] = {{0}};//these represent notes in the game
 
   float gyro_vals[3] = {0,0,0};
 
   testnotes[0].fret = 2;
   testnotes[0].y_pos = 0;
   testnotes[0].active = 1;
-  //playAudio("sound1.wav\0");
+  playAudio(rc,dir,fno,Fatfs,fid,Buff,"sound2.wav\0");
+  
   f3d_systick_config(62000); //we should use this and d_rate to configure BPM
   while(1){
     f3d_guitar_read(&gui);
@@ -293,9 +304,12 @@ int main(void) {
       game_ctl = 4;
       game_drawn = 0;
     }
+    add_frets(counter,&notes,testnotes);
+    printf("counter %d\n",counter);
     draw_game(game_ctl, &game_drawn, testnotes, d_rate, &counter);
     draw_pause(&game_ctl, &menu_drawn_pause, &menu_item, gui);
   }
+  
 }
 
 #ifdef USE_FULL_ASSERT

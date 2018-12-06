@@ -50,6 +50,7 @@ typedef struct fret_data {
   uint8_t active;
 } fret_t;
 
+
 void f3d_guitar_init(void);
 void f3d_guitar_read(guitar_t *);
 

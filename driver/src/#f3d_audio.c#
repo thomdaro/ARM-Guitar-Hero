@@ -21,6 +21,9 @@ extern uint8_t Audiobuf[AUDIOBUFSIZE];
 extern int audioplayerHalf;
 extern int audioplayerWhole;
 
+FATFS Fatfs;		/* File system object */
+FIL fid;		/* File object */
+BYTE Buff[512];		/* File read buffer */
 int ret;
 
 struct ckhd {
@@ -50,7 +53,10 @@ void die (FRESULT rc) {
   while (1);
 }
 
-int playAudio(FRESULT rc, DIR dir, FILINFO fno, FATFS Fatfs, FIL fid, BYTE Buff[128], char* fname){
+int playAudio(char* fname){
+  FRESULT rc;			// Result code 
+  DIR dir;			// Directory object 
+  FILINFO fno;			// File information object 
   UINT bw, br;
   unsigned int retval;
   int bytesread;
