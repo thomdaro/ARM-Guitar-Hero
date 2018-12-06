@@ -72,7 +72,21 @@ void selected_item(int x, int y, char* str){
 }
 */
 
-void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui){ //menuctl = 4 for pause
+void draw_countdown(int *countdown) {
+  draw_rectangle(50, 5, 75, 20, WHITE);
+  draw_rectangle(52, 7,  73, 18, BLACK);
+  f3d_lcd_drawChar(60, 10, '3', WHITE, BLACK);
+  Delay(62000);
+  f3d_lcd_drawChar(60, 10, '2', WHITE, BLACK);
+  Delay(62000);
+  f3d_lcd_drawChar(60, 10, '1', WHITE, BLACK);
+  Delay(62000);
+  draw_rectangle(50, 5, 75, 20, BLACK);
+  draw_rectangle(63, 5, 63, 20, WHITE);
+  *countdown = 0;
+}
+
+void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui, int* countdown){ //menuctl = 4 for pause
   if(*menu_ctl == 4){
     if(!(*menu_drawn)){
       f3d_lcd_fillScreen(BLACK);
@@ -97,9 +111,10 @@ void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui){ /
       f3d_lcd_drawChar(30, (*menu_item + 1) % 4 * 10 + 60, '>', BLACK, BLACK);
       Delay(10000);
     }
-    if (!BUTTON(gui, 1)) {
+    if ((*menu_item == 0 && !BUTTON(gui, 1)) || !MINUS(gui)) {
       *menu_ctl = 0;
       *menu_drawn = 0;
+      *countdown = 1;
     }
     /*
     switch(*menu_item) {
@@ -210,7 +225,7 @@ void add_frets(int counter, single_t notes, fret_t frets[20]){
 }
 */
 //draw game board if switching game state & controls fret drop / rate of drop
-void draw_game(int game_ctl,int* game_drawn,fret_t frets[20], int d_rate, int* counter){
+void draw_game(int game_ctl,int* game_drawn, fret_t frets[20], int d_rate, int* counter, int* countdown){
   if(game_ctl == 0){
     if(!(*game_drawn)){
       f3d_lcd_fillScreen(BLACK);
@@ -237,6 +252,9 @@ void draw_game(int game_ctl,int* game_drawn,fret_t frets[20], int d_rate, int* c
     draw_inactive_frets(gui);
     draw_active_frets(gui);
     drop_frets(frets);
+    if (*countdown) {
+      draw_countdown(countdown);
+    }
     Delay(d_rate);
     *counter++;
   }
@@ -267,7 +285,7 @@ int main(void) {
   Delay(10);
   f3d_guitar_init();
   Delay(10);
-  f3d_gyro_interface_init();
+  f3d_gyro_init();
   
   int d_rate = 100;//currently drop rate
   int counter = 0;//current number of ticks into game
@@ -276,6 +294,7 @@ int main(void) {
   int menu_drawn_pause = 0;//tells us whether the menu is on screen/if we shoudl redraw 
   int game_drawn = 0;//same as above, with game
   int menu_item =  0;//value of current menu item selected
+  int countdown =  0;//determines when to draw unpause countdown
   fret_t testnotes[20] = {{0}};//these represent notes in the game
 
   float gyro_vals[3] = {0,0,0};
@@ -293,8 +312,8 @@ int main(void) {
       game_ctl = 4;
       game_drawn = 0;
     }
-    draw_game(game_ctl, &game_drawn, testnotes, d_rate, &counter);
-    draw_pause(&game_ctl, &menu_drawn_pause, &menu_item, gui);
+    draw_game(game_ctl, &game_drawn, testnotes, d_rate, &counter, &countdown);
+    draw_pause(&game_ctl, &menu_drawn_pause, &menu_item, gui, &countdown);
   }
 }
 
