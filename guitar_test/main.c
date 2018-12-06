@@ -59,6 +59,12 @@ FATFS Fatfs;		/* File system object*/
 FIL Fil;		/* File object	     */
 BYTE Buff[128];		/* File read buffer  */
 /*
+  FRESULT rc;	
+  FIL fid;
+  DIR dir;			
+  FILINFO fno;		
+*/
+/*
 void die (FRESULT rc) {
 	printf("Failed with rc=%u.\n", rc);
 	while (1);
@@ -98,7 +104,7 @@ void draw_countdown(int *countdown) {
   *countdown = 0;
 }
 
-void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui, int* countdown){ //menuctl = 4 for pause
+void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui, int* countdown, int* play_menu_sound){ //menuctl = 4 for pause
   if(*menu_ctl == 4){
     if(!(*menu_drawn)){
       f3d_lcd_fillScreen(BLACK);
@@ -115,12 +121,14 @@ void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui, in
       f3d_lcd_drawChar(30, (*menu_item) % 4 * 10 + 60, '>', WHITE, BLACK);
       if (*menu_item != 0) f3d_lcd_drawChar(30, (*menu_item - 1) % 4 * 10 + 60, '>', BLACK, BLACK);
       else f3d_lcd_drawChar(30, 90, '>', BLACK, BLACK);
+      *play_menu_sound = 1;
       Delay(10000);
     }
     if(!BARUP(gui)){
       *menu_item = (*menu_item + 3) % 4;
       f3d_lcd_drawChar(30, (*menu_item) % 4 * 10 + 60, '>', WHITE, BLACK);
       f3d_lcd_drawChar(30, (*menu_item + 1) % 4 * 10 + 60, '>', BLACK, BLACK);
+      *play_menu_sound = 1;
       Delay(10000);
     }
     if ((*menu_item == 0 && !BUTTON(gui, 1)) || !MINUS(gui)) {
@@ -195,7 +203,7 @@ void drop_frets(fret_t frets[20]){ //drops all frets marked ACTIVE in list
 		     &frets[i].y_pos + 5, ST7735_width - (20 * (int)(&frets[i].fret)) - 30);
       drop_fret(&frets[i]);
       if (check_strummed(&frets[i]))
-	draw_fret(&frets[i], fret_colors[frets[i].fret]);	
+	draw_fret(&frets[i], fret_colors[frets[i].fret]);
     }
   }
 }
@@ -259,11 +267,12 @@ void draw_game(int game_ctl,int* game_drawn, fret_t frets[20], int d_rate, int* 
 
 int main(void) { 
   /*file objects*/
+  
   FRESULT rc;	
   FIL fid;
   DIR dir;			
   FILINFO fno;		
-
+  
   setvbuf(stdin, NULL, _IONBF, 0);
   setvbuf(stdout, NULL, _IONBF, 0);
   setvbuf(stderr, NULL, _IONBF, 0);		
@@ -305,6 +314,7 @@ int main(void) {
   int menu_drawn_pause = 0;//tells us whether the menu is on screen/if we shoudl redraw 
   int game_drawn = 0;//same as above, with game
   int menu_item =  0;//value of current menu item selected
+  int play_menu_sound = 0;
 
   fret_t testnotes[50] = {{0}};//these represent notes in the game
   int countdown =  0;//determines when to draw unpause countdown
@@ -330,10 +340,11 @@ int main(void) {
 
     add_frets(counter,&notes,testnotes);
     printf("counter %d\n",counter);
-
     draw_game(game_ctl, &game_drawn, testnotes, d_rate, &counter, &countdown);
-    draw_pause(&game_ctl, &menu_drawn_pause, &menu_item, gui, &countdown);
-
+    draw_pause(&game_ctl, &menu_drawn_pause, &menu_item, gui, &countdown, &play_menu_sound);
+    if(play_menu_sound){
+      playAudio(rc,dir,fno,Fatfs,fid,Buff,"hit.wav\0");
+      play_menu_sound = 0;}
   }
   
 }
