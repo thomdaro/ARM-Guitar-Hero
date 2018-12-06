@@ -92,6 +92,7 @@ int main(void)
 	printf("\n__________________Events struct________________\n");
 	event_t * eptr = &s_event;
 	while (eptr->next) {
+		printf("EPTR: %p\n", eptr);
 		printf("time: %u\n", eptr->time);
 		printf("message: %s\n", eptr->message);
 		eptr = eptr->next;
@@ -144,41 +145,46 @@ void init_sync_track(sync_track_t * sync_track)
 
 	int count = 0;
 
-	while(fgets(buffer, 128, fp) && buffer[0] != '}') {
+	while (fgets(buffer, 128, fp) && buffer[0] != '}') {
+		
 		sscanf(buffer, "%d", &st->time);
 		sscanf(buffer, "%*[^=]%*c%s", st->mod);
 		sscanf(buffer, "%*[^=]%*c%*s%d", &st->val);
 
-		st->next = (sync_track_t *) malloc(sizeof(sync_track_t));
+		st->next = calloc(1, sizeof(sync_track_t));
 		st = st->next;
 
 		sscanf(buffer, "%s", temp_str);
 		count++;
 	}
-	fgets(buffer, 128, fp);	// move to the next area
-	fgets(buffer, 128, fp);	// move to the next area
+	// skip 2 lines
+	fgets(buffer, 128, fp);
+	fgets(buffer, 128, fp);
 	printf("Number of sync track init lines :%d\n", count);
 }
 
 void init_event(event_t * event)
 {
-	char buffer[1024];
-	char temp_str[1024];
+	char buffer[256];
+	char temp_str[256];
 	event_t * e = event;
 
 	int count = 0;
 
-	while(fgets(buffer, 1024, fp) && buffer[0] != '}') {
+	while(fgets(buffer, 256, fp) && buffer[0] != '}') {
+
 		sscanf(buffer, "%d", &e->time);
 		sscanf(buffer, QUOTE_REGEX, e->message);
 
-		e->next = (event_t *) malloc(sizeof(event_t));
+		e->next = calloc(1, sizeof(event_t));
 		e = e->next;
 
 		sscanf(buffer, "%s", temp_str);
 		count++;
 	}
 	printf("Number of event init lines :%d\n", count);
+	fgets(buffer, 128, fp);
+	fgets(buffer, 128, fp);
 }
 
 void init_single(single_t * single)
@@ -190,16 +196,19 @@ void init_single(single_t * single)
 	int count = 0;
 
 	while(fgets(buffer, 128, fp) && buffer[0] != '}') {
+
+		// read time and char
 		sscanf(buffer, "%d", &s->time);
 		sscanf(buffer, "%*[^=]%*2c%c", &s->arg0);
-		if (s->arg0 == 'N') {
+
+		if (s->arg0 == 'N' || s->arg0 == 'S') {
 			sscanf(buffer, "%*[^=]%*4c%hd", &s->num0);
 			sscanf(buffer, "%*[^=]%*4c%*hd%hd", &s->num1);
 		} else {
 			sscanf(buffer, "%*[^=]%*4c%c", &s->arg1);
 		}
 
-		s->next = (single_t *) malloc(sizeof(single_t));
+		s->next = calloc(1, sizeof(single_t));
 		s = s->next;
 
 		sscanf(buffer, "%s", temp_str);

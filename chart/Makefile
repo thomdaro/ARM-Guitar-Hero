@@ -1,6 +1,6 @@
 # compilation flags for gdb
 
-CFLAGS  = -O1 -g -Wall
+CFLAGS  = -O0 -g -Wall
 ASFLAGS = -g
 
 # object files
