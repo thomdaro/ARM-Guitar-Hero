@@ -1,0 +1,21 @@
+I had some difficulties due to my interrupt handler for uart. This was becaus I didn't assign the 
+dequeue value to the character that was intended to be pushed. Once i fixed this issue, I was able
+to reformat my card and play audio pretty easily. I though I was supposed to configure the sample 
+rate for the device, but this didn't seem to have to be done. 
+I learned all about dac/dma by reading through their documentation and configurable parameters within
+those. I now know about generating sounds with the DAC, may be useful in the future.
+
+1) The peripheral base address is which device we are configuring DMA to work with. This points
+to the SPI interface.
+
+2) This is necessary so that we can advance the section of data that we're reading with DMA. 
+Without the increment, the base address would stay static and once we reached the end of the
+buffer, we would return to the initial position and probably read the same data.
+
+3) We have to wait for the memory transfer to complete before terminating the function.
+
+4) The spi protocol can take care of 4 bytes by itself, we would not get anything out of 
+using DMA for this.
+
+5) This is so that audio intended to be played at the moment will not be overwritten by DMA.
+If this were to happen, we would not get the intended audio, likely a garbled mess.

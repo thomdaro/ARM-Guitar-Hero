@@ -79,7 +79,7 @@ int main(void)
 	printf("%u\n", s_song.resolution);
 	printf("%s\n", s_song.genre);
 	printf("%s\n", s_song.music_stream);
-
+	/*
 	printf("\n__________________Sync track struct____________\n");
 	sync_track_t * sptr = &s_sync;
 	while (sptr->next) {
@@ -88,16 +88,16 @@ int main(void)
 		printf("val: %u\n", sptr->val);
 		sptr = sptr->next;
 	}
-
+	
 	printf("\n__________________Events struct________________\n");
 	event_t * eptr = &s_event;
 	while (eptr->next) {
 		printf("EPTR: %p\n", eptr);
 		printf("time: %u\n", eptr->time);
 		printf("message: %s\n", eptr->message);
-		eptr = eptr->next;
+		eptr = eptr->next;	        
 	}
-
+	*/
 	printf("\n__________________Single struct________________\n");
 	single_t * siptr = &s_sing;
 	while (siptr->next) {

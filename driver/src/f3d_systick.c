@@ -45,6 +45,10 @@ void f3d_systick_init(void) {
   SysTick_Config (SystemCoreClock / 100);
 }
 
+void f3d_systick_config(int i){
+  SysTick_Config(SystemCoreClock / i);
+}
+
 void SysTick_Handler(void) {
   if(systick_flag != 0x00){
     systick_flag--;

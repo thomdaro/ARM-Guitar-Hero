@@ -70,8 +70,8 @@ void selected_item(int x, int y, char* str){
   f3d_lcd_drawString(x, y, str, WHITE, BLACK);
 }
 
-void draw_pause(int menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui){ //menuctl = 4 for pause
-  if(menu_ctl == 4){
+void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui){ //menuctl = 4 for pause
+  if(*menu_ctl == 4){
     if(!(*menu_drawn)){
       f3d_lcd_fillScreen(BLACK);
       f3d_lcd_drawString(55, 40, "PAUSE", WHITE, BLACK);
@@ -99,6 +99,10 @@ void draw_pause(int menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui){ //
       break;
     case 3:
       selected_item(40, 60, "Resume");
+      if(!PLUS(gui)){
+	*menu_ctl = 0;
+	*menu_drawn = 0;
+      }
       break;
     }
   }
@@ -220,6 +224,7 @@ void draw_game(int game_ctl,int* game_drawn,fret_t frets[20], int d_rate, int* c
 }
 
 
+
 int main(void) { 
   setvbuf(stdin, NULL, _IONBF, 0);
   setvbuf(stdout, NULL, _IONBF, 0);
@@ -243,8 +248,9 @@ int main(void) {
   Delay(10);
   f3d_guitar_init();
   Delay(10);
+  f3d_gyro_interface_init();
   
-  int d_rate = 1;//currently drop rate
+  int d_rate = 100;//currently drop rate
   int counter = 0;//current number of ticks into game
   char button_vals[5] = {'y','g','b','r','o'};
   int game_ctl = 0;//controls which menu or on or whether we are in game
@@ -253,14 +259,23 @@ int main(void) {
   int menu_item =  0;//value of current menu item selected
   fret_t testnotes[20] = {{0}};//these represent notes in the game
 
+  float gyro_vals[3] = {0,0,0};
+
   testnotes[0].fret = 2;
   testnotes[0].y_pos = 0;
   testnotes[0].active = 1;
-
+  //playAudio("sound1.wav\0");
+  f3d_systick_config(62000); //we should use this and d_rate to configure BPM
   while(1){
     f3d_guitar_read(&gui);
+    f3d_gyro_getdata(gyro_vals);
+    //plus or shake to pause (hopefully this gyro function works)
+    if(!PLUS(gui) || gyro_vals[1] < -.5 || gyro_vals[1] > -.4){
+      game_ctl = 4;
+      game_drawn = 0;
+    }
     draw_game(game_ctl, &game_drawn, testnotes, d_rate, &counter);
-    draw_pause(game_ctl, &menu_drawn_pause, &menu_item, gui);
+    draw_pause(&game_ctl, &menu_drawn_pause, &menu_item, gui);
   }
 }
 
