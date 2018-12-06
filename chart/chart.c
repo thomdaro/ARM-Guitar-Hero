@@ -1,123 +1,70 @@
+#include <stm32f30x.h>
+#include <f3d_lcd_sd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "chart.h"
+#include <diskio.h>
+#include <ff.h>
+#include <chart.h>
 
-#define QUOTE_REGEX "%*[^\"]%*c%[^\"]"
-#define NUM_REGEX 	"%*[^=]%*2c%hd"
-
-/* song data */
-typedef struct song_t {
-	char name[64];
-	char artist[64];
-	uint16_t offset;
-	uint16_t resolution;
-	char genre[64];
-	char music_stream[128];
-} song_t;
-
-/* sync data
- * mod is one of:
- * -> B  - bitrate
- * -> TS - ?
- * -> A  - ?
- */
-typedef struct sync_track_t {
-	uint32_t time;
-	char mod[3];			// mod string (B/TS/A)
-	uint32_t val;
-	struct sync_track_t * next;	// pointer to the next struct
-} sync_track_t;
-
-/* event data */
-typedef struct event_t {
-	uint32_t time;
-	char message[1024];
-	struct event_t * next;			// pointer to the next struct
-} event_t;
-
-/* level data
- * arg0 could be one of:
- * -> N followed by 2 numbers (0-4, representing string)
- * -> E followed by either T or *
- */
-typedef struct single_t {
-	uint32_t time;
-	char arg0;
-	char arg1;
-	uint16_t num0;
-	uint16_t num1;
-	struct single_t * next;	// pointer to the next struct
-} single_t;
-
-void init_song(song_t *);
-void init_sync_track(sync_track_t *);
-void init_event(event_t *);
-void init_single(single_t *);
-
-FILE *fp;
-
-int main(void)
+/* manually copied from ff.c because it wouldn't include... */
+TCHAR* f_gets (
+	TCHAR* buff,	/* Pointer to the string buffer to read */
+	int len,		/* Size of string buffer (characters) */
+	FIL* fp			/* Pointer to the file object */
+)
 {
-	song_t 			s_song = {0};
-	sync_track_t 	s_sync = {0};
-	event_t 		s_event = {0};
-	single_t 		s_sing = {0};
+	int n = 0;
+	TCHAR c, *p = buff;
+	BYTE s[2];
+	UINT rc;
 
-	fp = fopen("./charts/Undertale/1. Once Upon A Time/Undertale OST- 001 - Once Upon A Time.chart", "r");
 
-	init_song(&s_song);
-	init_sync_track(&s_sync);
-	init_event(&s_event);
-	init_single(&s_sing);
-
-	printf("\n__________________Song struct__________________\n");
-	printf("%s\n", s_song.name);
-	printf("%s\n", s_song.artist);
-	printf("%u\n", s_song.offset);
-	printf("%u\n", s_song.resolution);
-	printf("%s\n", s_song.genre);
-	printf("%s\n", s_song.music_stream);
-
-	printf("\n__________________Sync track struct____________\n");
-	sync_track_t * sptr = &s_sync;
-	while (sptr->next) {
-		printf("time: %u\n", sptr->time);
-		printf("mod: %s\n", sptr->mod);
-		printf("val: %u\n", sptr->val);
-		sptr = sptr->next;
+	while (n < len - 1) {			/* Read bytes until buffer gets filled */
+		f_read(fp, s, 1, &rc);
+		if (rc != 1) break;			/* Break on EOF or error */
+		c = s[0];
+#if _LFN_UNICODE					/* Read a character in UTF-8 encoding */
+		if (c >= 0x80) {
+			if (c < 0xC0) continue;	/* Skip stray trailer */
+			if (c < 0xE0) {			/* Two-byte sequence */
+				f_read(fp, s, 1, &rc);
+				if (rc != 1) break;
+				c = ((c & 0x1F) << 6) | (s[0] & 0x3F);
+				if (c < 0x80) c = '?';
+			} else {
+				if (c < 0xF0) {		/* Three-byte sequence */
+					f_read(fp, s, 2, &rc);
+					if (rc != 2) break;
+					c = (c << 12) | ((s[0] & 0x3F) << 6) | (s[1] & 0x3F);
+					if (c < 0x800) c = '?';
+				} else {			/* Reject four-byte sequence */
+					c = '?';
+				}
+			}
+		}
+#endif
+#if _USE_STRFUNC >= 2
+		if (c == '\r') continue;	/* Strip '\r' */
+#endif
+		*p++ = c;
+		n++;
+		if (c == '\n') break;		/* Break on EOL */
 	}
-
-	printf("\n__________________Events struct________________\n");
-	event_t * eptr = &s_event;
-	while (eptr->next) {
-		printf("time: %u\n", eptr->time);
-		printf("message: %s\n", eptr->message);
-		eptr = eptr->next;
-	}
-
-	printf("\n__________________Single struct________________\n");
-	single_t * siptr = &s_sing;
-	while (siptr->next) {
-		printf("time: %-10u", siptr->time);
-		printf("arg0: '%c'\t", siptr->arg0);
-		printf("arg1: '%c'\t", siptr->arg1);
-		printf("num0: %-10d", siptr->num0);
-		printf("num1: %-10d\n", siptr->num1);
-		siptr = siptr->next;
-	}
-
-	return 0;
+	*p = 0;
+	return n ? buff : 0;			/* When no data read (eof or error), return with error. */
 }
 
-void init_song(song_t * song)
+void init_song(FIL * fp, song_t * song)
 {
-	char buffer[128];
-	char temp_str[128];
+
+	TCHAR buffer[128];
+	TCHAR temp_str[128];
 	int count = 0;
 
-	while(fgets(buffer, 128, fp) && strcmp(temp_str, "[SyncTrack]")) {
+
+	while(f_gets(buffer, 128, fp) && strcmp(temp_str, "[SyncTrack]")) {
 		sscanf(buffer, "%s", temp_str);
 		if (!strcmp(temp_str, "Name"))
 			sscanf(buffer, QUOTE_REGEX, song->name);
@@ -133,18 +80,18 @@ void init_song(song_t * song)
 			sscanf(buffer, QUOTE_REGEX, song->music_stream);
 		count++;
 	}
-	printf("Number of song init lines :%d\n", count);
+	printf("song lines :%d\n", count);
 }
 
-void init_sync_track(sync_track_t * sync_track)
+void init_sync_track(FIL * fp, sync_track_t * sync_track)
 {
-	char buffer[128];
-	char temp_str[128];
+	TCHAR buffer[128];
+	TCHAR temp_str[128];
 	sync_track_t * st = sync_track;
 
 	int count = 0;
 
-	while (fgets(buffer, 128, fp) && buffer[0] != '}') {
+	while (f_gets(buffer, 128, fp) && buffer[0] != '}') {
 		
 		sscanf(buffer, "%d", &st->time);
 		sscanf(buffer, "%*[^=]%*c%s", st->mod);
@@ -157,20 +104,20 @@ void init_sync_track(sync_track_t * sync_track)
 		count++;
 	}
 	// skip 2 lines
-	fgets(buffer, 128, fp);
-	fgets(buffer, 128, fp);
-	printf("Number of sync track init lines :%d\n", count);
+	f_gets(buffer, 128, fp);
+	f_gets(buffer, 128, fp);
+	printf("sync lines :%d\n", count);
 }
 
-void init_event(event_t * event)
+void init_event(FIL * fp, event_t * event)
 {
-	char buffer[256];
-	char temp_str[256];
+	TCHAR buffer[256];
+	TCHAR temp_str[256];
 	event_t * e = event;
 
 	int count = 0;
 
-	while(fgets(buffer, 256, fp) && buffer[0] != '}') {
+	while(f_gets(buffer, 256, fp) && buffer[0] != '}') {
 
 		sscanf(buffer, "%d", &e->time);
 		sscanf(buffer, QUOTE_REGEX, e->message);
@@ -181,22 +128,22 @@ void init_event(event_t * event)
 		sscanf(buffer, "%s", temp_str);
 		count++;
 	}
-	printf("Number of event init lines :%d\n", count);
-	fgets(buffer, 128, fp);
-	fgets(buffer, 128, fp);
+	printf("event lines :%d\n", count);
+	f_gets(buffer, 128, fp);
+	f_gets(buffer, 128, fp);
 }
 
-void init_single(single_t * single)
+void init_single(FIL * fp, single_t * single)
 {
-	char buffer[128];
-	char temp_str[128];
+	TCHAR buffer[128];
+	TCHAR temp_str[128];
 	single_t * s = single;
 
 	int count = 0;
 
-	while(fgets(buffer, 128, fp) && buffer[0] != '}') {
+	while(f_gets(buffer, 128, fp) && buffer[0] != '}') {
 
-		// read time and char
+		// read time and TCHAR
 		sscanf(buffer, "%d", &s->time);
 		sscanf(buffer, "%*[^=]%*2c%c", &s->arg0);
 
@@ -213,5 +160,5 @@ void init_single(single_t * single)
 		sscanf(buffer, "%s", temp_str);
 		count++;
 	}
-	printf("Number of single init lines :%d\n", count);
+	printf("single lines :%d\n", count);
 }
