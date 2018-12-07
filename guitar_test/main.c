@@ -49,10 +49,14 @@
 #define MINUS(x) (((x.b_one) >> 4) & 0x1)
 #define PLUS(x) (((x.b_one) >> 2) & 0x1)
 #define BUTTON(x, y) (((x.b_two) >> (3 + y)) & 0x1) //vals 0->4 y,g,b,r,o
+
 const uint16_t fret_colors[5] = {0x06BF, BLUE, YELLOW, RED, GREEN};
 const uint8_t fret_pos[5] = {2,4,1,3,0};
 const uint8_t button_pos[5] = {4,2,0,3,1};
 guitar_t gui;
+
+#define CHAR_MAX 10
+const char char_table[CHAR_MAX] = "0123456789";
 
 //File system stuff
 FATFS Fatfs;		/* File system object*/
@@ -107,7 +111,7 @@ void draw_countdown(int *countdown) {
   *countdown = 0;
 }
 
-void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui, int* countdown, int* play_menu_sound){ //menuctl = 4 for pause
+void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui, int* countdown, int* play_menu_sound, int* enter_song_select, int* selected_song){ //menuctl = 4 for pause
   if(*menu_ctl == 4){
     if(!(*menu_drawn)){
       f3d_lcd_fillScreen(BLACK);
@@ -139,7 +143,58 @@ void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui, in
       *menu_drawn = 0;
       *countdown = 1;
     }
+    if ((*menu_item == 2 && !BUTTON(gui, 1)) || !MINUS(gui)) {
+      
+      *menu_ctl = 0;
+      *menu_drawn = 0;
+      *enter_song_select = 1;
+      *countdown = 1;
+    }
+    if ((*menu_item == 1 && !BUTTON(gui, 1)) || !MINUS(gui)) {
+      *menu_ctl = 0;
+      *menu_drawn = 0;
+      *selected_song = 1;
+      *countdown = 1;
+    }
   }
+}
+
+char* draw_song_select(void){
+  f3d_lcd_fillScreen(WHITE);
+  f3d_lcd_fillScreen(BLACK);
+  f3d_lcd_drawString(20, 10, "Press   or   ", WHITE, BLACK);
+  f3d_lcd_drawChar(56, 10, ' ', GREEN, GREEN);
+  f3d_lcd_drawChar(86, 10, ' ', RED, RED);
+  f3d_lcd_drawString(20, 20, "Input song num:", GREEN, BLACK);
+  f3d_lcd_drawString(20, 30, "   ", GREEN, BLACK);
+  f3d_lcd_drawString(44, 34, "___", GREEN, BLACK);
+
+  // filename
+  static char input[11] = "song000.txt";
+  uint8_t char_pos = 0;
+  uint8_t char_sel = 0;
+  Delay(100);
+  f3d_guitar_read(&gui);
+  Delay(10);
+  f3d_lcd_drawString(20, 30, input, GREEN, BLACK);
+  
+  while (BUTTON(gui, 3)) {
+    f3d_guitar_read(&gui);
+    if (!BARUP(gui))
+      char_sel = (char_sel + CHAR_MAX - 1) % CHAR_MAX;
+    if (!BARDOWN(gui))
+      char_sel = (char_sel + 1) % CHAR_MAX;
+    if (!BUTTON(gui, 1)) {
+      char_pos = (char_pos + 1) % 3;
+      char_sel = 0;
+    }
+    input[char_pos+4] = char_table[char_sel];
+    f3d_lcd_drawChar(44, 30, input[4], GREEN, BLACK);
+    f3d_lcd_drawChar(50, 30, input[5], GREEN, BLACK);
+    f3d_lcd_drawChar(56, 30, input[6], GREEN, BLACK);
+    Delay(10);
+  }
+  return input;
 }
 
 void draw_fret(fret_t *fret, uint16_t color){
@@ -313,7 +368,7 @@ int main(void) {
   event_t events;
   single_t notes;
  
-  read_chart(&song_current,&sync,&events,&notes,rc,dir,fno,"song050.txt");
+  read_chart(&song_current,&sync,&events,&notes,rc,dir,fno,"song000.txt");
 
   int d_rate = 100;//currently drop rate
   int counter = 0;//current number of ticks into game
@@ -322,8 +377,11 @@ int main(void) {
   int menu_drawn_pause = 0;//tells us whether the menu is on screen/if we shoudl redraw 
   int game_drawn = 0;//same as above, with game
   int menu_item =  0;//value of current menu item selected
+  int enter_song_select = 0;
+  int restart_song = 0;
+  char* selected_song;
   int play_menu_sound = 0;
-
+  
   fret_t testnotes[50] = {{0}};//these represent notes in the game
   int countdown =  0;//determines when to draw unpause countdown
 
@@ -347,12 +405,23 @@ int main(void) {
     }
 
     add_frets(counter,&notes,testnotes);
-    printf("counter %d\n",counter);
+    //printf("counter %d\n",counter);
     draw_game(game_ctl, &game_drawn, testnotes, d_rate, &counter, &countdown, &notes);
-    draw_pause(&game_ctl, &menu_drawn_pause, &menu_item, gui, &countdown, &play_menu_sound);
+    draw_pause(&game_ctl, &menu_drawn_pause, &menu_item, gui, &countdown, &play_menu_sound, &enter_song_select, &selected_song);
     if(play_menu_sound){
       playAudio(rc,dir,fno,Fatfs,fid,Buff,"hit.wav\0");
       play_menu_sound = 0;}
+    if(enter_song_select){
+      selected_song = draw_song_select();
+      counter = 0;
+      read_chart(&song_current,&sync,&events,&notes,rc,dir,fno,selected_song);
+      enter_song_select = 0;
+    }
+    if(restart_song){
+      counter = 0;
+      read_chart(&song_current,&sync,&events,&notes,rc,dir,fno,selected_song);
+      restart_song = 0;
+    }
   }
   
 }
