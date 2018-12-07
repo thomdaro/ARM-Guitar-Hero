@@ -49,14 +49,10 @@
 #define MINUS(x) (((x.b_one) >> 4) & 0x1)
 #define PLUS(x) (((x.b_one) >> 2) & 0x1)
 #define BUTTON(x, y) (((x.b_two) >> (3 + y)) & 0x1) //vals 0->4 y,g,b,r,o
-
 const uint16_t fret_colors[5] = {0x06BF, BLUE, YELLOW, RED, GREEN};
 const uint8_t fret_pos[5] = {2,4,1,3,0};
 const uint8_t button_pos[5] = {4,2,0,3,1};
 guitar_t gui;
-
-#define CHAR_MAX 10
-const char char_table[CHAR_MAX] = "0123456789";
 
 //File system stuff
 FATFS Fatfs;		/* File system object*/
@@ -76,15 +72,12 @@ void die (FRESULT rc) {
 */
 
 //read chart from sd card
-void read_chart(song_t *s,  sync_track_t *syn, event_t *ev, single_t *notes, FRESULT rc, DIR dir, FILINFO fno, char* song){
-  //song = strcat("/charts/","notes.txt\0");
+void read_chart(song_t *s,  sync_track_t *syn, event_t *ev, single_t *notes, FRESULT rc, DIR dir, FILINFO fno){
   f_mount(0, &Fatfs);		/* Register volume work area (never fails) */
-  rc = f_opendir(&dir, "");
+  rc = f_opendir(&dir, "/charts");
   printf("A:");
   if (rc) die(rc);
-  char* to_open;
-  printf("%s\n,",to_open);
-  rc = f_open(&Fil, song, FA_READ);
+  rc = f_open(&Fil, "/charts/notes.txt", FA_READ);
   printf("B:");
   if (rc) die(rc);
   init_song(&Fil,s);
@@ -111,7 +104,7 @@ void draw_countdown(int *countdown) {
   *countdown = 0;
 }
 
-void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui, int* countdown, int* play_menu_sound, int* enter_song_select, int* selected_song){ //menuctl = 4 for pause
+void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui, int* countdown, int* play_menu_sound){ //menuctl = 4 for pause
   if(*menu_ctl == 4){
     if(!(*menu_drawn)){
       f3d_lcd_fillScreen(BLACK);
@@ -143,69 +136,15 @@ void draw_pause(int *menu_ctl, int *menu_drawn, int *menu_item, guitar_t gui, in
       *menu_drawn = 0;
       *countdown = 1;
     }
-    if ((*menu_item == 2 && !BUTTON(gui, 1)) || !MINUS(gui)) {
-      
-      *menu_ctl = 0;
-      *menu_drawn = 0;
-      *enter_song_select = 1;
-      *countdown = 1;
-    }
-    if ((*menu_item == 1 && !BUTTON(gui, 1)) || !MINUS(gui)) {
-      *menu_ctl = 0;
-      *menu_drawn = 0;
-      *selected_song = 1;
-      *countdown = 1;
-    }
   }
-}
-
-char* draw_song_select(void){
-  f3d_lcd_fillScreen(WHITE);
-  f3d_lcd_fillScreen(BLACK);
-  f3d_lcd_drawString(20, 10, "Press   or   ", WHITE, BLACK);
-  f3d_lcd_drawChar(56, 10, ' ', GREEN, GREEN);
-  f3d_lcd_drawChar(86, 10, ' ', RED, RED);
-  f3d_lcd_drawString(20, 20, "Input song num:", GREEN, BLACK);
-  f3d_lcd_drawString(20, 30, "   ", GREEN, BLACK);
-  f3d_lcd_drawString(44, 34, "___", GREEN, BLACK);
-
-  // filename
-  static char input[11] = "song000.txt";
-  uint8_t char_pos = 0;
-  uint8_t char_sel = 0;
-  Delay(100);
-  f3d_guitar_read(&gui);
-  Delay(10);
-  f3d_lcd_drawString(20, 30, input, GREEN, BLACK);
-  
-  while (BUTTON(gui, 3)) {
-    f3d_guitar_read(&gui);
-    if (!BARUP(gui))
-      char_sel = (char_sel + CHAR_MAX - 1) % CHAR_MAX;
-    if (!BARDOWN(gui))
-      char_sel = (char_sel + 1) % CHAR_MAX;
-    if (!BUTTON(gui, 1)) {
-      char_pos = (char_pos + 1) % 3;
-      char_sel = 0;
-    }
-    input[char_pos+4] = char_table[char_sel];
-    f3d_lcd_drawChar(44, 30, input[4], GREEN, BLACK);
-    f3d_lcd_drawChar(50, 30, input[5], GREEN, BLACK);
-    f3d_lcd_drawChar(56, 30, input[6], GREEN, BLACK);
-    Delay(10);
-  }
-  return input;
 }
 
 void draw_fret(fret_t *fret, uint16_t color){
   int draw_x_pos = ST7735_width  - (20 * fret->fret) - 30;
   draw_rectangle(draw_x_pos, fret->y_pos, draw_x_pos + 10, fret->y_pos + 5, color);
   f3d_lcd_drawPixel((uint8_t)(draw_x_pos + 5), (uint8_t)fret->y_pos, WHITE);
-  if (fret->y_pos > ST7735_height - 30 && fret->y_pos <= ST7735_height - 26){
-    //fret->active = 0;
+  if (fret->y_pos > ST7735_height - 30 && fret->y_pos <= ST7735_height - 26)
     draw_rectangle(draw_x_pos, fret->y_pos - 1, draw_x_pos + 10, fret->y_pos - 1, WHITE);
-    //fret->active = 0;
-  }
 }
 
 int check_strummed(fret_t *fret) {
@@ -263,9 +202,8 @@ void drop_frets(fret_t frets[20]){ //drops all frets marked ACTIVE in list
       draw_rectangle(&frets[i].y_pos, ST7735_width - (20 * (int)(&frets[i].fret)) - 30,
 		     &frets[i].y_pos + 5, ST7735_width - (20 * (int)(&frets[i].fret)) - 30);
       drop_fret(&frets[i]);
-      if (check_strummed(&frets[i])){
+      if (check_strummed(&frets[i]))
 	draw_fret(&frets[i], fret_colors[frets[i].fret]);
-      }
     }
   }
 }
@@ -276,7 +214,6 @@ void add_frets(int counter, single_t *notes, fret_t frets[50]){
   single_t temp;
   if(notes->time == counter){
     for(i=0;i<50;i++){
-      printf("%d\n",frets[i].active);
       if(!frets[i].active){
 	frets[i].fret = notes->num0;
 	frets[i].active = 1;
@@ -291,7 +228,7 @@ void add_frets(int counter, single_t *notes, fret_t frets[50]){
 }
 
 //draw game board if switching game state & controls fret drop / rate of drop
-void draw_game(int game_ctl,int* game_drawn, fret_t frets[20], int d_rate, int* counter, int* countdown, single_t *notes){
+void draw_game(int game_ctl,int* game_drawn, fret_t frets[20], int d_rate, int* counter, int* countdown){
   if(game_ctl == 0){
     if(!(*game_drawn)){
       f3d_lcd_fillScreen(BLACK);
@@ -314,13 +251,13 @@ void draw_game(int game_ctl,int* game_drawn, fret_t frets[20], int d_rate, int* 
       draw_rectangle(ST7735_width - 10,  0, ST7735_width - 8,  ST7735_height, WHITE);
       *game_drawn = 1;
     }
+    //add_frets(counter, single_t notes, frets);
     draw_inactive_frets(gui);
     draw_active_frets(gui);
     drop_frets(frets);
     if (*countdown) {
       draw_countdown(countdown);
     }
-    add_frets(*counter, notes, frets);
     Delay(d_rate);
     *counter = *counter + 1;
   }
@@ -367,8 +304,8 @@ int main(void) {
   sync_track_t sync;
   event_t events;
   single_t notes;
- 
-  read_chart(&song_current,&sync,&events,&notes,rc,dir,fno,"song000.txt");
+  
+  read_chart(&song_current,&sync,&events,&notes,rc,dir,fno);
 
   int d_rate = 100;//currently drop rate
   int counter = 0;//current number of ticks into game
@@ -377,11 +314,8 @@ int main(void) {
   int menu_drawn_pause = 0;//tells us whether the menu is on screen/if we shoudl redraw 
   int game_drawn = 0;//same as above, with game
   int menu_item =  0;//value of current menu item selected
-  int enter_song_select = 0;
-  int restart_song = 0;
-  char* selected_song;
   int play_menu_sound = 0;
-  
+
   fret_t testnotes[50] = {{0}};//these represent notes in the game
   int countdown =  0;//determines when to draw unpause countdown
 
@@ -405,23 +339,12 @@ int main(void) {
     }
 
     add_frets(counter,&notes,testnotes);
-    //printf("counter %d\n",counter);
-    draw_game(game_ctl, &game_drawn, testnotes, d_rate, &counter, &countdown, &notes);
-    draw_pause(&game_ctl, &menu_drawn_pause, &menu_item, gui, &countdown, &play_menu_sound, &enter_song_select, &selected_song);
+    printf("counter %d\n",counter);
+    draw_game(game_ctl, &game_drawn, testnotes, d_rate, &counter, &countdown);
+    draw_pause(&game_ctl, &menu_drawn_pause, &menu_item, gui, &countdown, &play_menu_sound);
     if(play_menu_sound){
       playAudio(rc,dir,fno,Fatfs,fid,Buff,"hit.wav\0");
       play_menu_sound = 0;}
-    if(enter_song_select){
-      selected_song = draw_song_select();
-      counter = 0;
-      read_chart(&song_current,&sync,&events,&notes,rc,dir,fno,selected_song);
-      enter_song_select = 0;
-    }
-    if(restart_song){
-      counter = 0;
-      read_chart(&song_current,&sync,&events,&notes,rc,dir,fno,selected_song);
-      restart_song = 0;
-    }
   }
   
 }
