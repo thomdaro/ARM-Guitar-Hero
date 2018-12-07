@@ -1,0 +1,24 @@
+1. We did this project as more of a free form type thing though we had decided on tasks beforehand.
+What I ended up doing was start the implementation of the game, so I began with creating the driver
+for the wii guitar. Instructions for this were clear online to that wasn't so difficult. After this,
+I made a draw rectangle fuction to make our game more easily since the board mainly consists of rects.
+After this, I made the structure to hold our frets as they drop down our board so that we could more
+easily increment y values. Then I made a pause menu implementation without any functionality since 
+I would have to add this later due to the early stage of the project. The next task for me was to 
+implement gyro to pause our board. I also began to get audio working at this point and nearly finished
+a rudimentary implementation. At this point, Dmitri had completed the drivers to read from chart files
+And I was able to plug these into our main game control function to read in notes from there. Then 
+after this, I just implemented a couple more menu functions that loaded different songs and restarted
+the game.
+
+Challenges I ran into were with initialization of the wii guitar. At first, I couldn't find the 
+register to decrypt the button data. I ran into issues with redrawing the board after our 
+notes would scroll down the screen as well. I had to find the right location to put new rectangles in.
+Initially, I also incorrectly made the draw rectangel function and Damien had to correct the bug this
+introduced. Aside from that, my part was mostly straightforward.
+
+If I did this again, I would probably have tried to save space by freeing the linked list from reading
+the file so that the heap won't overflwo after loading a couple of songs. Additionally, I would have
+tried to save space by packing booleans into ints instead of just using ints for each control
+variable i needed to use. I would probably have also split file read functionality into more drivers
+as our main got hefty towards the end.
