@@ -2,6 +2,8 @@
 
 This is our sick final project.
 
+My report is in my repo - Dmitrii
+
 ~~DDRBWWN - Dance Dance Revolution But With Wii Nunchuk~~
 
 ```
