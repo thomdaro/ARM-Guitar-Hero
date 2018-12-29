@@ -1,51 +1,15 @@
-#Sick project
-
-This is our sick final project.
-
-My report is in my repo - Dmitrii
-
-~~DDRBWWN - Dance Dance Revolution But With Wii Nunchuk~~
-
-```
-Ideas:
-
-Game:
-	- Fast Paced dance survival game with BATTLE ROYALE is NOT what this is.
-	This game is based on a popular game called Guitar Hero.
-
-Responsibilities:
-	Dmitrii:
-		- Core mechanics
-		- Graphics
-
-	Ben:
-		- Driver Development for the guitar
-		- Core mechanics
-
-	Damien:
-		- Menu
-		- Audio
+Baremetal build of Guitar Hero in C with ARM architecture. Uses various peripherals to control the game.
 
 Peripherals:
-	Guitar:
-		- Used as the main input device
-		- Play notes to the rythm
-		- Navigate the menu
+
+	Display - 128 x 160 LCD screen used to display the game. Undraws and redraws various elements to create the illusion of movement. Uses DMA (direct memory access) to draw elements far more quickly than otherwise possible.
 	
-	Gyroscope:
-		- Shake violently to pause the game
-
-	SD Card:
-		- Audio files are stored here
-		- Potentially the graphics files could be stored here as well
-
-	Display:
-		- Used for displaying the SICK game
-
-	Gravy:
-		- Used as sauce (weak) for my breakfast
-```
-
-### The main is located in guitar_test
-
-### Please check our individual repos for reports
+	Guitar Hero controller - Main input device. Custom driver written to read input from guitar controller. Controller consists of an up-down "strum bar", five fret buttons, and a start button all used for input.
+	
+	Gyroscope - Boards used for this project came with attached gyroscope. Shaking the board (or tilting) will pause the game.
+	
+	SD card - stores audio files for playback.
+	
+Songs are generated via the use of .chart files, which consist of song specifications (title, artist, tempo) and a list of notes with tick-numbered timestamps. Chart files are read top to bottom, and each note is added into a queue where it is then drawn onscreen. When a note is played (by holding its corresponding fret button and strumming) or reaches the end of the display area, it is removed from the queue and undrawn.
+	
+Developed by Damien Thomas, Ben Staples and Dmitrii Galantsev for H335 - Honors Computer Structures at Indiana University Bloomington.
